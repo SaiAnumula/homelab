@@ -1,0 +1,43 @@
+# ============================================================
+# Plex — media streaming
+# Sanitized example based on the homelab deployment.
+#
+# Notes:
+#   - host networking: local discovery (GDM) + direct media paths
+#   - GTX 1050 Ti passed through for NVENC/NVDEC hardware
+#     transcoding — the CPU barely breaks a sweat
+#   - storage tiering: config/metadata/transcodes on SSD,
+#     the actual movie & anime libraries on the 2TB HDD
+# ============================================================
+
+name: plex-media-server
+
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Los_Angeles
+      - VERSION=docker
+      - NVIDIA_VISIBLE_DEVICES=all
+      # One-time claim token from plex.tv/claim — first run only,
+      # kept in .env so it never lands in version control
+      - PLEX_CLAIM=${PLEX_CLAIM:-}
+    volumes:
+      # SSD volumes: app databases, artwork caches, metadata stay snappy
+      - ./config:/config
+      - ./transcode:/transcode
+      # HDD volumes: media library lives on the 2TB drive
+      - /mnt/wd2tb/plex/movies:/movies
+      - /mnt/wd2tb/plex/anime:/anime
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, video] # GTX 1050 Ti NVENC/NVDEC engine
+    restart: always

@@ -1,0 +1,76 @@
+# ============================================================
+# Immich — self-hosted photo management
+# Sanitized example based on the homelab deployment.
+#
+# Storage tiering strategy:
+#   HDD (/mnt/wd2tb) → originals: the irreplaceable archive
+#   SSD              → thumbs, encoded video, profiles, and the
+#                      postgres database — everything latency-
+#                      sensitive stays on flash
+# ============================================================
+
+name: immich
+
+services:
+  immich-server:
+    container_name: immich_server
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    volumes:
+      # HDD mount: heavy originals (photos + videos)
+      - /mnt/wd2tb/immich/pics:/usr/src/app/upload/library
+      # SSD mounts: database caches and app performance stay on flash
+      - ./upload/thumbs:/usr/src/app/upload/thumbs
+      - ./upload/encoded-video:/usr/src/app/upload/encoded-video
+      - ./upload/profile:/usr/src/app/upload/profile
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      # Binding to the host does not itself enforce Tailscale-only access.
+      # Host firewall and network policy must restrict reachability.
+      - 2283:2283
+    environment:
+      DB_HOSTNAME: postgres
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE_NAME: ${DB_DATABASE}
+      REDIS_HOSTNAME: redis
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, video] # GTX 1050 Ti NVENC engine for fast video transcoding
+    restart: always
+
+  immich-machine-learning:
+    container_name: immich_machine_learning
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}-cuda
+    volumes:
+      - model-cache:/cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, compute] # GTX 1050 Ti CUDA cores for facial recognition & search
+    restart: always
+
+  postgres:
+    container_name: immich_postgres
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_DB: ${DB_DATABASE}
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    restart: always
+
+  redis:
+    container_name: immich_redis
+    image: docker.io/redis:6.2-alpine
+    restart: always
+
+volumes:
+  model-cache:
