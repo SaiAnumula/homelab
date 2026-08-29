@@ -1,0 +1,37 @@
+# ============================================================
+# Secrets — NEVER commit these.
+# A security-minded candidate's repo should prove it.
+# ============================================================
+.env
+*.env
+!*.env.example
+
+# ============================================================
+# Runtime data — lives on the server, not in version control
+# (media, photos, databases, configs with tokens)
+# ============================================================
+# Local application data
+data/
+immich/upload/
+immich/postgres/
+plex/config/
+plex/transcode/
+
+# ============================================================
+# Logs & temp files
+# ============================================================
+*.log
+tmp/
+
+# ============================================================
+# OS / editor junk
+# ============================================================
+.DS_Store
+Thumbs.db
+
+# IDE settings
+.idea/
+.vscode/
+
+# Local overrides
+docker-compose.override.yml
