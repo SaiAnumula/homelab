@@ -1,55 +1,70 @@
 # Homelab
 
-This repository documents the infrastructure I run and the decisions behind it. It includes sanitized Docker Compose configurations, a high-level network diagram, and notes about hardware reuse, storage, and remote administration.
+This repository documents the machines and services I run at home and why they are set up the way they are. It contains sanitized Docker Compose files, a network diagram, and notes on hardware, storage, monitoring, and remote access.
 
-No credentials, private addresses, media, personal data, or live application databases are stored in this repository.
+It does not contain credentials, private IP addresses, media, personal data, or application databases.
 
-## Environment overview
+## Environment
 
-| System | Primary role |
-|---|---|
-| Ubuntu server | Always-on Docker host for Plex and Immich |
-| Main desktop | Local AI inference and larger on-demand game workloads |
-| Laptop game node | Smaller on-demand game-server workloads |
-| Raspberry Pi 5 | NAS proof of concept |
-| Linux workstations | Administration and daily use |
+| System | Hardware | Role |
+|---|---|---|
+| Ubuntu home server | NVIDIA GTX 1050 Ti, SSD plus a 2 TB HDD | Always-on Docker host for Plex, Immich, and the monitoring dashboard |
+| Main desktop | Intel Core i5-13600KF, 24 GB DDR4, AMD Radeon RX 9070 (16 GB VRAM), CachyOS | Daily workstation and larger game servers |
+| Laptop game node | Reused laptop running Linux | Smaller game servers, started when needed |
+| Raspberry Pi 5 | 4 GB model | NAS proof of concept |
+| Admin devices | Laptops and phones on the tailnet | Remote administration |
 
-Hardware details change as the lab evolves, so this repository focuses on architecture and reproducible configuration rather than acting as a fixed inventory.
+## Hardware status
+
+As of November 2026, one of the desktop's memory modules has failed. The desktop dropped from 32 GB to 24 GB of DDR4 and runs on the remaining modules. The RX 9070 still has its full 16 GB of VRAM.
+
+The always-on services are unaffected because Plex, Immich, and the dashboard run on the home server. On the desktop, jobs that fit in 32 GB now push the system into swap. I size desktop workloads for 24 GB of RAM and 16 GB of VRAM until the module is replaced.
 
 ## Services
 
-| Service | Purpose | Availability |
-|---|---|---|
-| Plex | Household media streaming | Always on |
-| Immich | Self-hosted photo management | Always on |
-| Minecraft and Palworld servers | Multiplayer game hosting | Started when needed |
-| Hermes-based assistant | Local model and agent experimentation | Run on the main desktop |
+| Service | Purpose | Host | Availability |
+|---|---|---|---|
+| Plex | Media streaming for the household | Home server | Always on |
+| Immich | Photo backup, search, and face recognition | Home server | Always on |
+| [Mission Control](https://github.com/SaiAnumula/homelab-mission-control) | Monitoring dashboard for every node | Home server | Always on |
+| Minecraft and Palworld | Multiplayer game servers, run as systemd services | Desktop or laptop game node | Started when needed |
 
 ## Networking and access
 
-Administrative access uses **Tailscale**, allowing approved devices to reach systems without exposing SSH or management interfaces through router port forwarding.
+I administer every machine over Tailscale. Approved devices reach SSH and web interfaces through the tailnet, so the router has no port forwards for administration.
 
-Public game access is a separate path. When a game server needs to accept players who are not members of the Tailscale network, a managed tunnel such as Playit can expose only the required game service. This does not make the rest of the homelab or its administration interfaces public.
+Game servers use a separate path. When friends outside the tailnet need to join, a Playit tunnel forwards only the game port. The rest of the network and every admin interface stay private.
 
 See [docs/network-topology.md](docs/network-topology.md) for the diagram and trust boundaries.
 
+## Monitoring
+
+[Mission Control](https://github.com/SaiAnumula/homelab-mission-control) is a dashboard I wrote to see every machine on one page. Each Linux host runs a small Python telemetry agent that uses only the standard library. The dashboard on the home server polls each agent and shows:
+
+- CPU, GPU, VRAM, memory, disk, and temperature
+- Docker container state and health
+- The systemd units I list, including `minecraft.service` and `palworld.service`
+- SMART health for each drive, when `smartctl` is available
+
+Agents listen only on the LAN and the tailnet.
+
 ## Design decisions
 
-### Containers for service isolation
+### Containers for each service
 
-Docker Compose keeps service configuration readable and repeatable. Application data and secrets stay outside version control.
+Each service has its own Docker Compose file, so I can read, rebuild, or move it on its own. Application data and secrets stay on the server and out of Git.
 
-### Private administration
+### GPU transcoding on the home server
 
-Tailscale provides identity-based access between approved devices. Management services are not intentionally exposed to the public internet.
+The GTX 1050 Ti handles Plex transcoding through NVENC and NVDEC. Immich uses the same card through CUDA for face recognition and smart search. Both containers request the GPU through the NVIDIA container runtime.
 
-### Reusing hardware
+### Storage split between SSD and HDD
 
-Always-on services run on hardware that is already available and sufficient for the workload. More demanding local-AI and game workloads run on the main desktop only when needed.
+Photo originals and the media library live on the 2 TB HDD. Databases, thumbnails, transcoded video, and Plex metadata live on the SSD, because those are read most often. The paths in the Compose files match my server, so review them before reuse.
 
-### Separating hot data from bulk storage
+### Reused hardware
 
-Large media and photo libraries use higher-capacity storage, while frequently accessed application data and caches can use faster storage. The exact paths in the Compose files reflect one environment and should be reviewed before reuse.
+The always-on services run on hardware I already had. Bigger game servers run on the desktop only while people are playing.
 
 ## Repository layout
 
@@ -69,22 +84,22 @@ homelab/
 
 ## Using the examples
 
-1. Review the volume paths and hardware settings for your own system.
-2. Copy the relevant `.env.example` to `.env`.
+1. Change the volume paths and GPU settings to match your system.
+2. Copy the `.env.example` in the service folder to `.env`.
 3. Replace every placeholder with a strong, unique value.
-4. Validate the configuration with `docker compose config`.
-5. Start the stack only after confirming storage paths, permissions, and backups.
+4. Run `docker compose config` to check the file.
+5. Confirm storage paths, permissions, and backups, then start the stack.
 
-The Compose files are sanitized documentation of my setup, not universal production defaults.
+The Compose files document my setup. They are not production defaults for every environment.
 
 ## Roadmap
 
-- [ ] Add an Ansible playbook for repeatable host setup
-- [ ] Add service health and resource monitoring
+- [x] Add service health and resource monitoring ([Mission Control](https://github.com/SaiAnumula/homelab-mission-control))
+- [ ] Replace the failed desktop memory module
+- [ ] Add an Ansible playbook for host setup
 - [ ] Document the backup and restore test process
-- [ ] Add configuration validation to GitHub Actions
+- [ ] Add Compose validation to GitHub Actions
 
 ## Related project
 
 [Raspberry Pi NAS build walkthrough](https://youtu.be/0SLmClxMjXE)
-

@@ -1,13 +1,12 @@
 # ============================================================
-# Secrets — NEVER commit these.
-# A security-minded candidate's repo should prove it.
+# Secrets. Never commit these.
 # ============================================================
 .env
 *.env
 !*.env.example
 
 # ============================================================
-# Runtime data — lives on the server, not in version control
+# Runtime data. This lives on the server, not in Git.
 # (media, photos, databases, configs with tokens)
 # ============================================================
 # Local application data
@@ -18,13 +17,13 @@ plex/config/
 plex/transcode/
 
 # ============================================================
-# Logs & temp files
+# Logs and temp files
 # ============================================================
 *.log
 tmp/
 
 # ============================================================
-# OS / editor junk
+# OS and editor files
 # ============================================================
 .DS_Store
 Thumbs.db

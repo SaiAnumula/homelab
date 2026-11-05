@@ -1,12 +1,11 @@
 # ============================================================
-# Immich — self-hosted photo management
-# Sanitized example based on the homelab deployment.
+# Immich: self-hosted photo management
+# Sanitized copy of the home server deployment.
 #
-# Storage tiering strategy:
-#   HDD (/mnt/wd2tb) → originals: the irreplaceable archive
-#   SSD              → thumbs, encoded video, profiles, and the
-#                      postgres database — everything latency-
-#                      sensitive stays on flash
+# Storage layout:
+#   HDD (/mnt/wd2tb): original photos and videos
+#   SSD: thumbnails, encoded video, profile images, and the
+#        Postgres database, which are read most often
 # ============================================================
 
 name: immich
@@ -16,9 +15,9 @@ services:
     container_name: immich_server
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
     volumes:
-      # HDD mount: heavy originals (photos + videos)
+      # HDD: original photos and videos
       - /mnt/wd2tb/immich/pics:/usr/src/app/upload/library
-      # SSD mounts: database caches and app performance stay on flash
+      # SSD: generated files that Immich reads often
       - ./upload/thumbs:/usr/src/app/upload/thumbs
       - ./upload/encoded-video:/usr/src/app/upload/encoded-video
       - ./upload/profile:/usr/src/app/upload/profile
@@ -39,7 +38,7 @@ services:
           devices:
             - driver: nvidia
               count: 1
-              capabilities: [gpu, video] # GTX 1050 Ti NVENC engine for fast video transcoding
+              capabilities: [gpu, video] # GTX 1050 Ti NVENC for video transcoding
     restart: always
 
   immich-machine-learning:
@@ -53,7 +52,7 @@ services:
           devices:
             - driver: nvidia
               count: 1
-              capabilities: [gpu, compute] # GTX 1050 Ti CUDA cores for facial recognition & search
+              capabilities: [gpu, compute] # GTX 1050 Ti CUDA for face recognition and smart search
     restart: always
 
   postgres:

@@ -1,13 +1,13 @@
 # ============================================================
-# Plex — media streaming
-# Sanitized example based on the homelab deployment.
+# Plex: media streaming
+# Sanitized copy of the home server deployment.
 #
 # Notes:
-#   - host networking: local discovery (GDM) + direct media paths
-#   - GTX 1050 Ti passed through for NVENC/NVDEC hardware
-#     transcoding — the CPU barely breaks a sweat
-#   - storage tiering: config/metadata/transcodes on SSD,
-#     the actual movie & anime libraries on the 2TB HDD
+#   - Host networking lets Plex use local discovery (GDM).
+#   - The GTX 1050 Ti handles transcoding through NVENC and
+#     NVDEC, so the CPU does not have to.
+#   - Config, metadata, and transcodes live on the SSD. The
+#     movie and anime libraries live on the 2 TB HDD.
 # ============================================================
 
 name: plex-media-server
@@ -23,14 +23,14 @@ services:
       - TZ=America/Los_Angeles
       - VERSION=docker
       - NVIDIA_VISIBLE_DEVICES=all
-      # One-time claim token from plex.tv/claim — first run only,
-      # kept in .env so it never lands in version control
+      # One-time claim token from plex.tv/claim, needed only on
+      # the first run. It lives in .env, which Git ignores.
       - PLEX_CLAIM=${PLEX_CLAIM:-}
     volumes:
-      # SSD volumes: app databases, artwork caches, metadata stay snappy
+      # SSD: Plex database, artwork cache, and metadata
       - ./config:/config
       - ./transcode:/transcode
-      # HDD volumes: media library lives on the 2TB drive
+      # HDD: media library on the 2 TB drive
       - /mnt/wd2tb/plex/movies:/movies
       - /mnt/wd2tb/plex/anime:/anime
     deploy:
@@ -39,5 +39,5 @@ services:
           devices:
             - driver: nvidia
               count: 1
-              capabilities: [gpu, video] # GTX 1050 Ti NVENC/NVDEC engine
+              capabilities: [gpu, video] # GTX 1050 Ti NVENC and NVDEC
     restart: always
