@@ -1,5 +1,7 @@
 # Homelab
 
+[![Validate Compose files](https://github.com/SaiAnumula/homelab/actions/workflows/validate.yml/badge.svg)](https://github.com/SaiAnumula/homelab/actions/workflows/validate.yml)
+
 This repository documents the machines and services I run at home and why they are set up the way they are. It contains sanitized Docker Compose files, a network diagram, and notes on hardware, storage, monitoring, and remote access.
 
 It does not contain credentials, private IP addresses, media, personal data, or application databases.
@@ -8,7 +10,7 @@ It does not contain credentials, private IP addresses, media, personal data, or 
 
 | System | Hardware | Role |
 |---|---|---|
-| Ubuntu home server | NVIDIA GTX 1050 Ti, SSD plus a 2 TB HDD | Always-on Docker host for Plex, Immich, and the monitoring dashboard |
+| Ubuntu home server | NVIDIA GTX 1050 Ti, SSD plus a 2 TB HDD | Always-on Docker host for Plex, Jellyfin, Immich, and the monitoring dashboard |
 | Main desktop | Intel Core i5-13600KF, 24 GB DDR4, AMD Radeon RX 9070 (16 GB VRAM), CachyOS | Daily workstation and larger game servers |
 | Laptop game node | Reused laptop running Linux | Smaller game servers, started when needed |
 | Raspberry Pi 5 | 4 GB model | NAS proof of concept |
@@ -18,20 +20,23 @@ It does not contain credentials, private IP addresses, media, personal data, or 
 
 As of November 2026, one of the desktop's memory modules has failed. The desktop dropped from 32 GB to 24 GB of DDR4 and runs on the remaining modules. The RX 9070 still has its full 16 GB of VRAM.
 
-The always-on services are unaffected because Plex, Immich, and the dashboard run on the home server. On the desktop, jobs that fit in 32 GB now push the system into swap. I size desktop workloads for 24 GB of RAM and 16 GB of VRAM until the module is replaced.
+The always-on services are unaffected because Plex, Jellyfin, Immich, and the dashboard run on the home server. On the desktop, jobs that fit in 32 GB now push the system into swap. I size desktop workloads for 24 GB of RAM and 16 GB of VRAM until the module is replaced.
 
 ## Services
 
 | Service | Purpose | Host | Availability |
 |---|---|---|---|
 | Plex | Media streaming for the household | Home server | Always on |
+| Jellyfin | Open-source media streaming from the same library | Home server | Always on |
 | Immich | Photo backup, search, and face recognition | Home server | Always on |
 | [Mission Control](https://github.com/SaiAnumula/homelab-mission-control) | Monitoring dashboard for every node | Home server | Always on |
 | Minecraft and Palworld | Multiplayer game servers, run as systemd services | Desktop or laptop game node | Started when needed |
 
 ## Networking and access
 
-I administer every machine over Tailscale. Approved devices reach SSH and web interfaces through the tailnet, so the router has no port forwards for administration.
+Plex, Jellyfin, and Immich are reachable only over Tailscale. Immich and Jellyfin bind to the server's Tailscale address. Plex needs host networking for local discovery, so the host firewall limits its port to the `tailscale0` interface and Plex Remote Access is off. The router forwards no ports for any of them.
+
+I administer every machine over Tailscale too. Approved devices reach SSH and web interfaces through the tailnet.
 
 Game servers use a separate path. When friends outside the tailnet need to join, a Playit tunnel forwards only the game port. The rest of the network and every admin interface stay private.
 
@@ -56,11 +61,19 @@ Each service has its own Docker Compose file, so I can read, rebuild, or move it
 
 ### GPU transcoding on the home server
 
-The GTX 1050 Ti handles Plex transcoding through NVENC and NVDEC. Immich uses the same card through CUDA for face recognition and smart search. Both containers request the GPU through the NVIDIA container runtime.
+The GTX 1050 Ti handles Plex and Jellyfin transcoding through NVENC and NVDEC. Jellyfin mounts the Plex library read-only, so both servers share one copy of the media. Immich uses the same card through CUDA for face recognition and smart search. Both containers request the GPU through the NVIDIA container runtime.
 
 ### Storage split between SSD and HDD
 
-Photo originals and the media library live on the 2 TB HDD. Databases, thumbnails, transcoded video, and Plex metadata live on the SSD, because those are read most often. The paths in the Compose files match my server, so review them before reuse.
+Photo originals and the media library live on the 2 TB HDD. Databases, thumbnails, transcoded video, and Plex and Jellyfin metadata live on the SSD, because those are read most often. The paths in the Compose files match my server, so review them before reuse.
+
+### Pinned image versions
+
+Every image is pinned to a release, and CI rejects `latest` tags. Upgrades happen when I change a version on purpose, not whenever a container restarts.
+
+### Backups that get tested
+
+[docs/backup-and-restore.md](docs/backup-and-restore.md) lists what gets backed up, the commands, and a restore test that runs on a second machine.
 
 ### Reused hardware
 
@@ -72,9 +85,15 @@ The always-on services run on hardware I already had. Bigger game servers run on
 homelab/
 ├── README.md
 ├── .gitignore
+├── .github/workflows/
+│   └── validate.yml
 ├── docs/
+│   ├── backup-and-restore.md
 │   └── network-topology.md
 ├── immich/
+│   ├── docker-compose.yml
+│   └── .env.example
+├── jellyfin/
 │   ├── docker-compose.yml
 │   └── .env.example
 └── plex/
@@ -86,7 +105,7 @@ homelab/
 
 1. Change the volume paths and GPU settings to match your system.
 2. Copy the `.env.example` in the service folder to `.env`.
-3. Replace every placeholder with a strong, unique value.
+3. Replace every placeholder with a strong, unique value, and set `TAILSCALE_IP` to the host's address from `tailscale ip -4`.
 4. Run `docker compose config` to check the file.
 5. Confirm storage paths, permissions, and backups, then start the stack.
 
@@ -96,9 +115,10 @@ The Compose files document my setup. They are not production defaults for every 
 
 - [x] Add service health and resource monitoring ([Mission Control](https://github.com/SaiAnumula/homelab-mission-control))
 - [ ] Replace the failed desktop memory module
+- [x] Add Compose validation to GitHub Actions
+- [x] Document the backup and restore process
+- [ ] Run and log the first restore test
 - [ ] Add an Ansible playbook for host setup
-- [ ] Document the backup and restore test process
-- [ ] Add Compose validation to GitHub Actions
 
 ## Related project
 

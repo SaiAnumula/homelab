@@ -1,0 +1,42 @@
+# ============================================================
+# Jellyfin: open-source media streaming
+# Sanitized copy of the home server deployment.
+#
+# Notes:
+#   - Jellyfin reads the same movie and anime folders as Plex,
+#     mounted read-only so it cannot change the library.
+#   - The GTX 1050 Ti handles transcoding through NVENC and
+#     NVDEC. Enable NVIDIA NVENC under Dashboard > Playback.
+#   - Config and cache live on the SSD. Media lives on the
+#     2 TB HDD.
+# ============================================================
+
+name: jellyfin
+
+services:
+  jellyfin:
+    image: docker.io/jellyfin/jellyfin:${JELLYFIN_VERSION:-12.4.20261026-211555}
+    container_name: jellyfin
+    user: 1000:1000
+    ports:
+      # Listen only on the server's Tailscale address.
+      - ${TAILSCALE_IP:?set TAILSCALE_IP in .env}:8096:8096
+    environment:
+      - TZ=America/Los_Angeles
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
+    volumes:
+      # SSD: Jellyfin database, metadata, and transcode cache
+      - ./config:/config
+      - ./cache:/cache
+      # HDD: shared media library, read-only
+      - /mnt/wd2tb/plex/movies:/media/movies:ro
+      - /mnt/wd2tb/plex/anime:/media/anime:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, video] # GTX 1050 Ti NVENC and NVDEC
+    restart: unless-stopped

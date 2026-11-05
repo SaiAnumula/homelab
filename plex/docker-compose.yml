@@ -3,7 +3,11 @@
 # Sanitized copy of the home server deployment.
 #
 # Notes:
-#   - Host networking lets Plex use local discovery (GDM).
+#   - Host networking lets Plex use local discovery (GDM). It also
+#     binds port 32400 on every interface, so the host firewall
+#     limits it to Tailscale, for example:
+#       ufw allow in on tailscale0 to any port 32400 proto tcp
+#     Remote Access in Plex is off and the router forwards nothing.
 #   - The GTX 1050 Ti handles transcoding through NVENC and
 #     NVDEC, so the CPU does not have to.
 #   - Config, metadata, and transcodes live on the SSD. The
@@ -14,7 +18,7 @@ name: plex-media-server
 
 services:
   plex:
-    image: lscr.io/linuxserver/plex:latest
+    image: lscr.io/linuxserver/plex:1.43.4.10903-e5521bd8c-ls328
     container_name: plex
     network_mode: host
     environment:

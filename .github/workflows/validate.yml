@@ -1,0 +1,41 @@
+name: Validate Compose files
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check each stack with docker compose config
+        run: |
+          status=0
+          for file in */docker-compose.yml; do
+            dir=$(dirname "$file")
+            echo "Checking $dir"
+            # The example values stand in for the real, ignored .env file.
+            cp "$dir/.env.example" "$dir/.env"
+            docker compose -f "$file" --env-file "$dir/.env" config --quiet || status=1
+            rm "$dir/.env"
+          done
+          exit $status
+
+      - name: Reject unpinned image tags
+        run: |
+          if grep -nE 'image:.*(:latest|:release)\s*$|IMMICH_VERSION:-release' */docker-compose.yml; then
+            echo "Pin every image to a specific version."
+            exit 1
+          fi
+
+      - name: Make sure no real .env file is committed
+        run: |
+          if git ls-files | grep -E '(^|/)\.env$'; then
+            echo "A .env file is tracked. Remove it and rotate its secrets."
+            exit 1
+          fi
