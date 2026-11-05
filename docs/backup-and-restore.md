@@ -129,6 +129,7 @@ rm -rf ~/homelab/immich/postgres ~/homelab/plex/config ~/homelab/jellyfin/config
 
 ## Restore test log
 
+No restore test has been run yet. Each test adds one row to this table.
+
 | Date | Backup set | Immich | Plex | Jellyfin | Time to restore | Notes |
 |---|---|---|---|---|---|---|
-| | | | | | | |
