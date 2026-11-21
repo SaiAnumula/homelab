@@ -12,7 +12,7 @@ flowchart TD
     Tunnel["Playit game tunnel"]
 
     subgraph LAN["Home LAN"]
-        Server["Ubuntu Docker server<br/>Plex, Jellyfin, Immich,<br/>Mission Control"]
+        Server["Ubuntu Docker server<br/>Plex, Jellyfin, Immich,<br/>Mission Control,<br/>Prometheus, Grafana, Loki,<br/>Alloy, Alertmanager"]
         Desktop["Main desktop"]
         Laptop["Laptop game node"]
         Pi["Raspberry Pi NAS PoC"]
@@ -42,8 +42,9 @@ flowchart TD
 
 ## Trust boundaries
 
-- Immich and Jellyfin bind only to the server's Tailscale address. Plex uses host networking, so the host firewall limits port 32400 to the `tailscale0` interface.
+- In this repository's templates, Immich and Jellyfin bind only to the server's Tailscale address. The live deployment differs: Immich publishes to loopback and is reached through Tailscale Serve, and Jellyfin uses host networking like Plex, listening on every interface behind the host firewall. Plex uses host networking in both, so the host firewall limits port 32400 to the `tailscale0` interface.
 - SSH and admin interfaces accept connections only from the LAN or the tailnet.
 - The Playit tunnel forwards only the port of the game server it is configured for.
 - Mission Control telemetry agents listen only on the LAN and the tailnet.
+- Prometheus, Grafana, Loki, Alloy, and Alertmanager run on the home server as a separate Compose project that is not part of this repository.
 - This public copy leaves out secrets, private addresses, device identifiers, and Tailscale policy.

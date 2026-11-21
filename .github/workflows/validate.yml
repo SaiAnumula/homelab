@@ -20,22 +20,71 @@ jobs:
             dir=$(dirname "$file")
             echo "Checking $dir"
             # The example values stand in for the real, ignored .env file.
-            cp "$dir/.env.example" "$dir/.env"
-            docker compose -f "$file" --env-file "$dir/.env" config --quiet || status=1
-            rm "$dir/.env"
+            docker compose -f "$file" --env-file "$dir/.env.example" config --quiet || status=1
           done
           exit $status
 
-      - name: Reject unpinned image tags
+      - name: Reject floating image tags in the rendered config
         run: |
-          if grep -nE 'image:.*(:latest|:release)\s*$|IMMICH_VERSION:-release' */docker-compose.yml; then
-            echo "Pin every image to a specific version."
+          # Check the RENDERED images, not the source text. Interpolation can
+          # turn a pinned-looking template into a floating tag, for example
+          # IMMICH_VERSION=latest in an env file.
+          status=0
+          for file in */docker-compose.yml; do
+            dir=$(dirname "$file")
+            echo "Rendering images for $dir"
+            floating=$(docker compose -f "$file" --env-file "$dir/.env.example" config --images \
+              | grep -E ':(latest|release)([.-][^/@]+)?(@sha256:[0-9a-f]+)?$' || true)
+            if [ -n "$floating" ]; then
+              echo "Floating image tags in $dir:"
+              printf '  %s\n' $floating
+              status=1
+            fi
+          done
+          if [ "$status" -ne 0 ]; then
+            echo "Pin every image to a specific version or digest."
             exit 1
           fi
 
-      - name: Make sure no real .env file is committed
+      - name: Negative check - blank DB_PASSWORD must fail interpolation
         run: |
-          if git ls-files | grep -E '(^|/)\.env$'; then
-            echo "A .env file is tracked. Remove it and rotate its secrets."
+          # The Compose files must reject an empty required database
+          # variable. If this ever passes, the :? guards have regressed.
+          sed 's/^DB_PASSWORD=.*/DB_PASSWORD=/' immich/.env.example > immich/.env.blank
+          if docker compose -f immich/docker-compose.yml --env-file immich/.env.blank config --quiet; then
+            echo "FAIL: an empty DB_PASSWORD was accepted by docker compose config."
+            echo "The required-variable guards are not working."
+            rm immich/.env.blank
+            exit 1
+          fi
+          echo "OK: empty DB_PASSWORD was rejected, as required."
+          rm immich/.env.blank
+
+      - name: Negative check - IMMICH_VERSION=latest must be caught
+        run: |
+          # Prove the rendered-image check above catches a floating tag that
+          # only exists after interpolation.
+          sed 's/^IMMICH_VERSION=.*/IMMICH_VERSION=latest/' immich/.env.example > immich/.env.latest
+          floating=$(docker compose -f immich/docker-compose.yml --env-file immich/.env.latest config --images \
+            | grep -E ':(latest|release)([.-][^/@]+)?(@sha256:[0-9a-f]+)?$' || true)
+          if [ -z "$floating" ]; then
+            echo "FAIL: IMMICH_VERSION=latest produced no floating tag in the rendered images."
+            echo "The rendered-image check is not working."
+            rm immich/.env.latest
+            exit 1
+          fi
+          echo "OK: the rendered-image check caught:"
+          printf '  %s\n' $floating
+          rm immich/.env.latest
+
+      - name: Make sure no real env file is committed
+        run: |
+          # Match the .gitignore family: any tracked *.env is a secret leak,
+          # except the *.env.example templates.
+          bad=$(git ls-files | grep -E '\.env$' | grep -vE '\.env\.example$' || true)
+          if [ -n "$bad" ]; then
+            echo "Tracked env file(s) with real values:"
+            printf '  %s\n' $bad
+            echo "Remove them and rotate their secrets."
             exit 1
           fi

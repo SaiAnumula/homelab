@@ -12,6 +12,9 @@
 #     NVDEC, so the CPU does not have to.
 #   - Config, metadata, and transcodes live on the SSD. The
 #     movie and anime libraries live on the 2 TB HDD.
+#   - Plex keeps its database inside the ./config bind, so there are no
+#     external database credentials to interpolate. PLEX_CLAIM is the
+#     only interpolated variable and stays optional by design.
 # ============================================================
 
 name: plex-media-server

@@ -30,11 +30,12 @@ The always-on services are unaffected because Plex, Jellyfin, Immich, and the da
 | Jellyfin | Open-source media streaming from the same library | Home server | Always on |
 | Immich | Photo backup, search, and face recognition | Home server | Always on |
 | [Mission Control](https://github.com/SaiAnumula/homelab-mission-control) | Monitoring dashboard for every node | Home server | Always on |
+| Prometheus, Grafana, Loki, Alloy, and Alertmanager | Metrics, dashboards, log aggregation, and alerting for the server and its containers | Home server | Always on |
 | Minecraft and Palworld | Multiplayer game servers, run as systemd services | Desktop or laptop game node | Started when needed |
 
 ## Networking and access
 
-Plex, Jellyfin, and Immich are reachable only over Tailscale. Immich and Jellyfin bind to the server's Tailscale address. Plex needs host networking for local discovery, so the host firewall limits its port to the `tailscale0` interface and Plex Remote Access is off. The router forwards no ports for any of them.
+The Compose files in this repository are sanitized templates of the live deployment, and the two do not match everywhere. In the templates, Immich and Jellyfin publish their web ports on the server's Tailscale address. On the live server, Immich publishes to loopback and Tailscale Serve forwards the tailnet to it, and Jellyfin runs with host networking, listening on every interface behind the host firewall. Plex uses host networking in both the template and the live deployment, for local discovery (GDM); the host firewall limits port 32400 to the `tailscale0` interface, and Plex Remote Access is off. The router forwards no ports for any of them.
 
 I administer every machine over Tailscale too. Approved devices reach SSH and web interfaces through the tailnet.
 
@@ -53,6 +54,8 @@ See [docs/network-topology.md](docs/network-topology.md) for the diagram and tru
 
 Agents listen only on the LAN and the tailnet.
 
+Alongside Mission Control, the home server runs a standard observability layer: Prometheus scrapes and stores metrics, Grafana serves the dashboards, Loki with the Alloy collector aggregates container and host logs, and Alertmanager routes alerts. Those containers belong to the live deployment but are not part of the three Compose projects in this repository, so the examples here cover only part of what runs on the server.
+
 ## Design decisions
 
 ### Containers for each service
@@ -69,7 +72,7 @@ Photo originals and the media library live on the 2 TB HDD. Databases, thumbnail
 
 ### Pinned image versions
 
-Every image is pinned to a release, and CI rejects `latest` tags. Upgrades happen when I change a version on purpose, not whenever a container restarts.
+Every image in the templates is pinned to a release, and CI validates the rendered Compose output, so a floating tag like `latest` is rejected even when it only appears after an env file is applied. The live server may run different tags than the templates record; the templates hold the intended pins, and upgrades happen when I change a version on purpose, not whenever a container restarts.
 
 ### Backups that get tested
 
@@ -106,7 +109,7 @@ homelab/
 1. Change the volume paths and GPU settings to match your system.
 2. Copy the `.env.example` in the service folder to `.env`.
 3. Replace every placeholder with a strong, unique value, and set `TAILSCALE_IP` to the host's address from `tailscale ip -4`.
-4. Run `docker compose config` to check the file.
+4. Run `docker compose config` to check the file. Required variables, such as the Immich database settings, fail with an explicit message when they are unset or empty.
 5. Confirm storage paths, permissions, and backups, then start the stack.
 
 The Compose files document my setup. They are not production defaults for every environment.

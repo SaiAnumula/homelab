@@ -9,6 +9,10 @@
 #     NVDEC. Enable NVIDIA NVENC under Dashboard > Playback.
 #   - Config and cache live on the SSD. Media lives on the
 #     2 TB HDD.
+#   - Jellyfin keeps its database (SQLite) inside the ./config bind, so
+#     there are no external database credentials to interpolate. The
+#     only required variable is TAILSCALE_IP, which already fails
+#     interpolation when unset or empty.
 # ============================================================
 
 name: jellyfin
