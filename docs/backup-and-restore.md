@@ -59,13 +59,14 @@ for required in /mnt/wd2tb/immich/pics; do
   }
 done
 
-# Immich writes originals into anything mounted under /usr/src/app/upload.
-# The backup set covers library, thumbs, encoded-video, and profile.
-# A separate upload or backups bind is a stop condition: it may hold the
-# only copy of user data, and this runbook does not save it.
+# Immich writes originals into anything mounted under /usr/src/app/upload,
+# including a bind at /usr/src/app/upload itself. The backup set covers
+# library, thumbs, encoded-video, and profile. Any other mount there is a
+# stop condition: it may hold the only copy of user data, and this runbook
+# does not save it.
 uncovered=$(docker inspect immich_server \
   --format '{{ range .Mounts }}{{ .Destination }}{{ "\n" }}{{ end }}' \
-  | grep '^/usr/src/app/upload/' \
+  | grep -E '^/usr/src/app/upload(/|$)' \
   | grep -vFx -e /usr/src/app/upload/library \
             -e /usr/src/app/upload/thumbs \
             -e /usr/src/app/upload/encoded-video \
@@ -111,14 +112,53 @@ docker exec -t immich_postgres pg_dumpall --clean --if-exists --username=postgre
   | gzip > "$BACKUP_DIR/immich-db.sql.gz"
 ```
 
-Copy the originals and profile images. The profile source is read from the running container, so a moved or renamed bind cannot make this copy the wrong directory:
+Copy the originals and profile images. Both sources pass the same guard: `docker inspect` prints an empty string when the exact bind is missing, and an unguarded `rsync -a "$profile_src"/` would then copy `/`. A copy therefore refuses to run unless its source is exactly one existing directory that is not the root, not a multi-line fragment, and not the backup destination or inside it. The profile source is read from the running container, so a moved or renamed bind cannot make this copy the wrong directory. If the live stack has no separate profile bind, the runbook says so explicitly and skips the profile copy instead of backing up `/`:
 
 ```bash
 set -euo pipefail
-rsync -a /mnt/wd2tb/immich/pics/ "$BACKUP_DIR/immich-library/"
+library_src=/mnt/wd2tb/immich/pics
 profile_src=$(docker inspect immich_server \
   --format '{{ range .Mounts }}{{ if eq .Destination "/usr/src/app/upload/profile" }}{{ .Source }}{{ end }}{{ end }}')
-rsync -a "$profile_src"/ "$BACKUP_DIR/immich-profile/"
+
+copy_tree() {
+  local label="$1" src="$2" dest="$3"
+  if [ -z "$src" ]; then
+    echo "FAIL: $label source is empty; refusing to guess a copy source" >&2
+    exit 1
+  fi
+  if [ "$src" = "/" ]; then
+    echo "FAIL: $label source is /; refusing to copy the whole host" >&2
+    exit 1
+  fi
+  case $src in
+    *[[:space:]]*|*".."*)
+      echo "FAIL: $label source is not a single directory path: $src" >&2
+      exit 1 ;;
+  esac
+  if [ ! -d "$src" ]; then
+    echo "FAIL: $label source is not an existing directory: $src" >&2
+    exit 1
+  fi
+  if [ "$src" = "$dest" ]; then
+    echo "FAIL: $label source is the backup destination: $src" >&2
+    exit 1
+  fi
+  case "$dest/" in
+    "$src"/*)
+      echo "FAIL: $label source contains the backup destination: $src" >&2
+      exit 1 ;;
+  esac
+  rsync -a "$src"/ "$dest/"
+}
+
+copy_tree "library" "$library_src" "$BACKUP_DIR/immich-library"
+
+if [ -n "$profile_src" ]; then
+  copy_tree "profile" "$profile_src" "$BACKUP_DIR/immich-profile"
+else
+  echo "NOTE: no separate profile bind is mounted at /usr/src/app/upload/profile." >&2
+  echo "NOTE: profile images are NOT in this backup set; nothing was copied from /." >&2
+fi
 cp /opt/immich/.env "$BACKUP_DIR/immich.env"
 ```
 
