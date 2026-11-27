@@ -1,22 +1,23 @@
 # Network topology
 
-The homelab has two entry paths from outside the house:
+The homelab spans two separate physical networks connected by a Tailscale WireGuard overlay:
 
-- The Tailscale WireGuard mesh carries administration and service access between approved devices.
-- A Playit tunnel forwards one game-server port to players outside the tailnet and reaches nothing else.
-
-The router forwards no inbound ports for any service.
+- The Ubuntu home server is the only homelab host on my residential home LAN. The home router forwards no inbound ports.
+- My main desktop, laptop node, Raspberry Pi 5, and admin devices sit on separate externally managed wired and Wi-Fi networks that I do not control.
+- All machines connect peer-to-peer over Tailscale. The home server is a normal Tailscale peer and does not act as a subnet router or VPN exit gateway.
+- A Playit tunnel forwards one game-server port to players outside the tailnet when an on-demand game server is running. It reaches nothing else.
 
 ## Physical topology
 
 ![Homelab physical network topology](diagrams/physical-topology.svg)
 
-| Host | Uplink | Hardware | Role |
-|---|---|---|---|
-| Ubuntu home server | Wired 1 GbE | Intel Core i5-3570K, NVIDIA GTX 1050 Ti, SSD + 2 TB HDD | Primary always-on Docker host, media, photos, monitoring, Mission Control dashboard |
-| Main desktop | Wired LAN | Intel Core i5-13600KF, 24 GB DDR4, AMD Radeon RX 9070 (16 GB VRAM), CachyOS | Daily workstation, local AI workloads (paused), on-demand game servers |
-| Laptop node | Wi-Fi | Intel Core i3-1215U, 16 GB RAM, Ubuntu 24.04 LTS | Secondary Docker host (monitoring agents) and on-demand game servers |
-| Raspberry Pi 5 | LAN | 4 GB model | NAS proof of concept |
+| Host | Location and network | Uplink | Hardware | Role |
+|---|---|---|---|---|
+| Ubuntu home server | Home LAN | Wired 1 GbE | Intel Core i5-3570K, NVIDIA GTX 1050 Ti, SSD + 2 TB HDD | Primary always-on Docker host, media, photos, monitoring, Mission Control dashboard |
+| Main desktop | Remote network (externally managed) | Wired Ethernet | Intel Core i5-13600KF, 24 GB DDR4, AMD Radeon RX 9070 (16 GB VRAM), CachyOS | Daily workstation, local AI workloads (paused), on-demand game servers |
+| Laptop node | Remote network (externally managed) | Wi-Fi | Intel Core i3-1215U, 16 GB RAM, Ubuntu 24.04 LTS | Secondary Docker host (monitoring agents) and on-demand game servers |
+| Raspberry Pi 5 | Remote network (externally managed) | External network | 4 GB model | NAS proof of concept |
+| Admin devices | Remote / mobile | Wi-Fi / cellular | Laptop, tablet, phone | Administration and service access over Tailscale |
 
 ## Logical and Docker topology
 
@@ -25,42 +26,39 @@ The router forwards no inbound ports for any service.
 ```mermaid
 flowchart TD
     Internet((Internet))
-    Router["Home router (NAT, no port forwards)"]
     Tunnel["Playit game tunnel"]
 
-    subgraph LAN["Home LAN"]
+    subgraph Home["Home LAN"]
+        Router["Home router (NAT, no port forwards)"]
         Server["Ubuntu home server<br/>Immich, Jellyfin, Plex,<br/>Homepage, Wallos, Cockpit,<br/>Mission Control,<br/>Prometheus, Grafana, Loki, Alloy, Alertmanager"]
+    end
+
+    subgraph Remote["Remote network (externally managed)"]
         Desktop["Main desktop (CachyOS)<br/>Cockpit, Mission Control agent"]
         Laptop["Laptop node (Ubuntu)<br/>node-exporter, cAdvisor, Alloy,<br/>Cockpit, Mission Control agent"]
         Pi["Raspberry Pi 5 NAS PoC"]
+        Admin["Admin devices"]
         Game["On-demand game server"]
-    end
-
-    subgraph Mesh["Private Tailscale mesh"]
-        Admin["Approved admin devices"]
     end
 
     Internet --> Router
     Router --> Server
-    Router --> Desktop
-    Router --> Laptop
-    Router --> Pi
     Internet --> Tunnel
     Tunnel --> Game
     Desktop -.- Game
     Laptop -.- Game
-    Server -- "telemetry polling" --> Desktop
-    Server -- "telemetry polling" --> Laptop
-    Laptop -- "metrics and logs" --> Server
+    Server -. "Tailscale telemetry polling" .-> Desktop
+    Server -. "Tailscale telemetry polling" .-> Laptop
+    Laptop -. "Tailscale metrics and logs" .-> Server
     Admin -. "Tailscale Serve HTTPS & SSH" .-> Server
-    Admin -. "encrypted administration" .-> Desktop
-    Admin -. "encrypted administration" .-> Laptop
-    Admin -. "encrypted administration" .-> Pi
+    Admin -. "Tailscale administration" .-> Desktop
+    Admin -. "Tailscale administration" .-> Laptop
+    Admin -. "Tailscale administration" .-> Pi
 ```
 
 ## Docker networking and Tailscale connectivity
 
-On the Ubuntu home server, Compose stacks use isolated bridge networks where possible and host networking only where local discovery or host metrics require it:
+On the home server, Compose stacks use isolated bridge networks where possible and host networking only where local discovery or host metrics require it:
 
 | Stack / Service | Docker network | Live binding | Access path |
 |---|---|---|---|
@@ -72,14 +70,15 @@ On the Ubuntu home server, Compose stacks use isolated bridge networks where pos
 | Jellyfin | `host` | `:8096` | Behind host firewall |
 | `node-exporter`, `cAdvisor`, `Alloy`, `blackbox` | `host` | Host stack | Metrics scraped by Prometheus, logs pushed to Loki |
 | Cockpit (all Linux hosts) | Native systemd | `127.0.0.1:9091` on home server | Tailscale Serve HTTPS (`:9443`) and tailnet access |
-| Mission Control | Native systemd | Dashboard `:8080`, agents `:4242` | LAN and tailnet polling |
+| Mission Control | Native systemd | Dashboard `:8080`, agents `:4242` | Tailscale peer polling across sites |
 
 ## Trust boundaries
 
+- The home LAN and the remote network are separate physical networks with no shared Layer 2 broadcast domain. The remote devices sit on separate externally managed wired and Wi-Fi subnets and do not rely on direct local-LAN connectivity between each other. Tailscale is the common logical network connecting all devices across both locations.
+- The home server does not advertise subnet routes or act as a Tailscale exit node.
 - In this repository's templates, Immich and Jellyfin bind only to the server's Tailscale address. On the live server, Immich, Homepage, Wallos, and Cockpit publish to loopback and Tailscale Serve terminates HTTPS for the tailnet. Jellyfin runs with host networking behind the host firewall, and Plex uses host networking in both the template and live setup with the host firewall limiting port `32400` to `tailscale0`.
 - Grafana, Prometheus, Loki, and Alertmanager bind directly to the home server's `tailscale0` address rather than `0.0.0.0`.
-- SSH and admin interfaces accept connections only from the LAN or the tailnet.
+- SSH and admin interfaces accept connections only over the tailnet or the host's local network, scoped by UFW.
 - The Playit tunnel forwards only the port of the active game server.
-- Mission Control telemetry agents listen only on the LAN and the tailnet.
 - Prometheus, Grafana, Loki, Alloy, Alertmanager, Homepage, and Wallos run on the live hosts outside the three Compose templates in this repository.
 - This public copy leaves out secrets, private IP addresses, `.ts.net` hostnames, MAC addresses, and Tailscale ACL policy.
