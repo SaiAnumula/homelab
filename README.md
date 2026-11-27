@@ -10,9 +10,9 @@ It does not contain credentials, private IP addresses, media, personal data, or 
 
 | System | Hardware | Role |
 |---|---|---|
-| Ubuntu home server | NVIDIA GTX 1050 Ti, SSD plus a 2 TB HDD | Always-on Docker host for Plex, Jellyfin, Immich, and the monitoring dashboard |
-| Main desktop | Intel Core i5-13600KF, 24 GB DDR4, AMD Radeon RX 9070 (16 GB VRAM), CachyOS | Daily workstation and larger game servers |
-| Laptop game node | Reused laptop running Linux | Smaller game servers, started when needed |
+| Ubuntu home server | NVIDIA GTX 1050 Ti, SSD plus a 2 TB HDD | Always-on Docker host for Plex, Jellyfin, Immich, Homepage, Wallos, and monitoring |
+| Main desktop | Intel Core i5-13600KF, 24 GB DDR4, AMD Radeon RX 9070 (16 GB VRAM), CachyOS | Daily workstation, local AI inference, and larger game servers |
+| Laptop node | Reused laptop running Ubuntu | Secondary Docker host (VPN-isolated download stack, monitoring agents) and smaller game servers |
 | Raspberry Pi 5 | 4 GB model | NAS proof of concept |
 | Admin devices | Laptops and phones on the tailnet | Remote administration |
 
@@ -29,9 +29,13 @@ The always-on services are unaffected because Plex, Jellyfin, Immich, and the da
 | Plex | Media streaming for the household | Home server | Always on |
 | Jellyfin | Open-source media streaming from the same library | Home server | Always on |
 | Immich | Photo backup, search, and face recognition | Home server | Always on |
+| Homepage | Tailscale-only landing dashboard for homelab services (not templated here) | Home server | Always on |
+| Wallos | Self-hosted subscription tracker behind Tailscale Serve (not templated here) | Home server | Always on |
 | [Mission Control](https://github.com/SaiAnumula/homelab-mission-control) | Monitoring dashboard for every node | Home server | Always on |
 | Prometheus, Grafana, Loki, Alloy, and Alertmanager | Metrics, dashboards, log aggregation, and alerting for the server and its containers | Home server | Always on |
-| Minecraft and Palworld | Multiplayer game servers, run as systemd services | Desktop or laptop game node | Started when needed |
+| Cockpit | Host administration web UI over Tailscale | All Linux hosts | Always on |
+| Gluetun + qBittorrent | VPN kill-switch download stack (not templated here) | Laptop node | Always on |
+| Minecraft and Palworld | Multiplayer game servers, run as systemd services | Desktop or laptop node | Started when needed |
 
 ## Networking and access
 
@@ -103,6 +107,12 @@ homelab/
     ├── docker-compose.yml
     └── .env.example
 ```
+
+## Prerequisites
+
+- Docker Engine with Docker Compose v2 (`docker compose`).
+- NVIDIA Container Toolkit if you keep the GPU transcoding and Immich ML blocks. Remove `deploy.resources.reservations.devices` on CPU-only hosts.
+- Tailscale is optional. The templates render with any IPv4 address in `TAILSCALE_IP`.
 
 ## Using the examples
 

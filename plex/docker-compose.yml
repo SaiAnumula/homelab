@@ -27,7 +27,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Los_Angeles
+      - TZ=${TZ:-America/Los_Angeles}
       - VERSION=docker
       - NVIDIA_VISIBLE_DEVICES=all
       # One-time claim token from plex.tv/claim, needed only on
