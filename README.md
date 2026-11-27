@@ -12,7 +12,7 @@ It does not contain credentials, private IP addresses, media, personal data, or 
 |---|---|---|
 | Ubuntu home server | NVIDIA GTX 1050 Ti, SSD plus a 2 TB HDD | Always-on Docker host for Plex, Jellyfin, Immich, Homepage, Wallos, and monitoring |
 | Main desktop | Intel Core i5-13600KF, 24 GB DDR4, AMD Radeon RX 9070 (16 GB VRAM), CachyOS | Daily workstation, local AI inference, and larger game servers |
-| Laptop node | Reused laptop running Ubuntu | Secondary Docker host (VPN-isolated download stack, monitoring agents) and smaller game servers |
+| Laptop node | Reused laptop running Ubuntu | Secondary Docker host (monitoring agents) and smaller game servers |
 | Raspberry Pi 5 | 4 GB model | NAS proof of concept |
 | Admin devices | Laptops and phones on the tailnet | Remote administration |
 
@@ -34,7 +34,6 @@ The always-on services are unaffected because Plex, Jellyfin, Immich, and the da
 | [Mission Control](https://github.com/SaiAnumula/homelab-mission-control) | Monitoring dashboard for every node | Home server | Always on |
 | Prometheus, Grafana, Loki, Alloy, and Alertmanager | Metrics, dashboards, log aggregation, and alerting for the server and its containers | Home server | Always on |
 | Cockpit | Host administration web UI over Tailscale | All Linux hosts | Always on |
-| Gluetun + qBittorrent | VPN kill-switch download stack (not templated here) | Laptop node | Always on |
 | Minecraft and Palworld | Multiplayer game servers, run as systemd services | Desktop or laptop node | Started when needed |
 
 ## Networking and access
