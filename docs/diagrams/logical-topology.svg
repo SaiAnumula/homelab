@@ -1,0 +1,197 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 680" width="1120" height="680" role="img" aria-label="Homelab Logical and Docker Network Topology">
+  <defs>
+    <style>
+      .bg { fill: #0d1117; }
+      .zone { fill: #161b22; stroke: #30363d; stroke-width: 1.5; rx: 12; }
+      .zone-ts { fill: #101926; stroke: #388bfd; stroke-width: 1.6; rx: 12; }
+      .bridge { fill: #151e28; stroke: #2f81f7; stroke-width: 1.3; stroke-dasharray: 5 3; rx: 9; }
+      .hostnet { fill: #1d1a14; stroke: #d29922; stroke-width: 1.3; stroke-dasharray: 5 3; rx: 9; }
+      .native { fill: #132119; stroke: #2ea043; stroke-width: 1.3; rx: 9; }
+      .box { fill: #21262d; stroke: #3b434d; stroke-width: 1.2; rx: 7; }
+      .title { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #f0f6fc; }
+      .subtitle { font: 400 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #8b949e; }
+      .zone-lbl { font: 700 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #8b949e; letter-spacing: 0.08em; }
+      .zone-lbl-blue { font: 700 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #58a6ff; letter-spacing: 0.08em; }
+      .zone-lbl-amber { font: 700 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #e3b341; letter-spacing: 0.07em; }
+      .zone-lbl-green { font: 700 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #3fb950; letter-spacing: 0.07em; }
+      .h-txt { font: 700 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #f0f6fc; }
+      .p-txt { font: 400 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #adbac7; }
+      .mono { font: 600 10.5px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #79c0ff; }
+      .mono-green { font: 600 10.5px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #56d364; }
+      .mono-amber { font: 600 10.5px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #e3b341; }
+      .line-ts { stroke: #58a6ff; stroke-width: 1.7; fill: none; }
+      .line-local { stroke: #3fb950; stroke-width: 1.6; stroke-dasharray: 4 3; fill: none; }
+      .line-poll { stroke: #a371f7; stroke-width: 1.6; stroke-dasharray: 5 3; fill: none; }
+      .edge-lbl { font: 600 10.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #8b949e; }
+    </style>
+    <marker id="arr-b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#58a6ff"/>
+    </marker>
+    <marker id="arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#3fb950"/>
+    </marker>
+    <marker id="arr-p" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#a371f7"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1120" height="680" rx="14"/>
+
+  <text class="title" x="32" y="38">Homelab Logical &amp; Docker Network Topology</text>
+  <text class="subtitle" x="32" y="58">Service placement, Docker bridge isolation, Tailscale Serve HTTPS proxies, and tailnet-only binds</text>
+
+  <!-- Left Column: Tailscale Ingress / Trust Boundary -->
+  <rect class="zone-ts" x="32" y="80" width="268" height="544"/>
+  <text class="zone-lbl-blue" x="48" y="104">TAILSCALE TAILNET (tailscale0)</text>
+
+  <rect class="box" x="48" y="120" width="236" height="64"/>
+  <text class="h-txt" x="62" y="142">Tailscale Serve (HTTPS)</text>
+  <text class="p-txt" x="62" y="159">Terminates TLS on tailnet only,</text>
+  <text class="p-txt" x="62" y="174">proxies to 127.0.0.1 loopback</text>
+
+  <rect class="box" x="48" y="198" width="236" height="128"/>
+  <text class="h-txt" x="62" y="218">Serve Routes (Home Server)</text>
+  <text class="mono" x="62" y="238">:443 / :2283  -> 127.0.0.1:2283</text>
+  <text class="p-txt" x="62" y="252">Immich photo server</text>
+  <text class="mono" x="62" y="270">:8443         -> 127.0.0.1:3010</text>
+  <text class="p-txt" x="62" y="284">Homepage proxy</text>
+  <text class="mono" x="62" y="302">:10443        -> 127.0.0.1:8282</text>
+  <text class="p-txt" x="62" y="316">Wallos subscription tracker</text>
+
+  <rect class="box" x="48" y="338" width="236" height="72"/>
+  <text class="h-txt" x="62" y="360">Cockpit Admin Proxy</text>
+  <text class="mono" x="62" y="380">:9443         -> 127.0.0.1:9091</text>
+  <text class="p-txt" x="62" y="397">Tailnet HTTPS on all Linux hosts</text>
+
+  <rect class="box" x="48" y="426" width="236" height="86"/>
+  <text class="h-txt" x="62" y="448">Direct tailscale0 Binds</text>
+  <text class="mono" x="62" y="468">Grafana :3000  Loki :3100</text>
+  <text class="mono" x="62" y="485">Prom    :9090  Alert :9093</text>
+  <text class="p-txt" x="62" y="502">Bound to tailnet IP, not 0.0.0.0</text>
+
+  <rect class="box" x="48" y="528" width="236" height="80"/>
+  <text class="h-txt" x="62" y="550">Host Firewall (UFW)</text>
+  <text class="p-txt" x="62" y="568">Limits Plex :32400 to tailscale0</text>
+  <text class="p-txt" x="62" y="584">and scopes LAN/tailnet admin</text>
+  <text class="p-txt" x="62" y="600">access across hosts</text>
+
+  <!-- Center Column: Home Server (Docker Bridges + Host Network + Native) -->
+  <rect class="zone" x="328" y="80" width="490" height="544"/>
+  <text class="zone-lbl" x="346" y="104">UBUNTU HOME SERVER (DOCKER + SYSTEMD)</text>
+
+  <!-- Bridge 1: immich_default -->
+  <rect class="bridge" x="346" y="120" width="222" height="148"/>
+  <text class="zone-lbl-blue" x="358" y="140">immich_default (bridge)</text>
+  <rect class="box" x="358" y="148" width="198" height="36"/>
+  <text class="h-txt" x="368" y="164">immich_server</text>
+  <text class="mono-green" x="368" y="178">127.0.0.1:2283</text>
+  <rect class="box" x="358" y="188" width="198" height="30"/>
+  <text class="p-txt" x="368" y="207">immich_machine_learning (CUDA)</text>
+  <rect class="box" x="358" y="224" width="96" height="32"/>
+  <text class="p-txt" x="368" y="244">postgres :5432</text>
+  <rect class="box" x="460" y="224" width="96" height="32"/>
+  <text class="p-txt" x="472" y="244">redis :6379</text>
+
+  <!-- Bridge 2: homepage_default + wallos -->
+  <rect class="bridge" x="582" y="120" width="220" height="72"/>
+  <text class="zone-lbl-blue" x="594" y="140">homepage_default (bridge)</text>
+  <text class="p-txt" x="594" y="160">nginx proxy  <tspan class="mono-green">127.0.0.1:3010</tspan></text>
+  <text class="p-txt" x="594" y="178">homepage dashboard (:3000 int.)</text>
+
+  <rect class="bridge" x="582" y="200" width="220" height="68"/>
+  <text class="zone-lbl-blue" x="594" y="220">wallos_wallos_internal (bridge)</text>
+  <text class="p-txt" x="594" y="240">wallos  <tspan class="mono-green">127.0.0.1:8282</tspan></text>
+  <text class="p-txt" x="594" y="257">Subscription tracker (SQLite)</text>
+
+  <!-- Bridge 3: monitoring_mon -->
+  <rect class="bridge" x="346" y="284" width="456" height="94"/>
+  <text class="zone-lbl-blue" x="358" y="304">monitoring_mon (bridge, published on tailscale0 IP only)</text>
+  <rect class="box" x="358" y="316" width="102" height="48"/>
+  <text class="h-txt" x="370" y="336">Grafana</text>
+  <text class="mono" x="370" y="353">:3000</text>
+  <rect class="box" x="468" y="316" width="108" height="48"/>
+  <text class="h-txt" x="480" y="336">Prometheus</text>
+  <text class="mono" x="480" y="353">:9090</text>
+  <rect class="box" x="584" y="316" width="96" height="48"/>
+  <text class="h-txt" x="596" y="336">Loki</text>
+  <text class="mono" x="596" y="353">:3100</text>
+  <rect class="box" x="688" y="316" width="104" height="48"/>
+  <text class="h-txt" x="698" y="336">Alertmgr</text>
+  <text class="mono" x="698" y="353">:9093</text>
+
+  <!-- Host Network Containers -->
+  <rect class="hostnet" x="346" y="394" width="456" height="106"/>
+  <text class="zone-lbl-amber" x="358" y="414">DOCKER HOST NETWORK (SHARED HOST STACK, BEHIND UFW)</text>
+  <rect class="box" x="358" y="426" width="136" height="60"/>
+  <text class="h-txt" x="370" y="446">Plex (NVENC)</text>
+  <text class="mono-amber" x="370" y="463">:32400 + GDM</text>
+  <text class="p-txt" x="370" y="478">UFW -> tailscale0</text>
+  <rect class="box" x="504" y="426" width="136" height="60"/>
+  <text class="h-txt" x="516" y="446">Jellyfin (NVENC)</text>
+  <text class="mono-amber" x="516" y="463">:8096</text>
+  <text class="p-txt" x="516" y="478">Read-only media</text>
+  <rect class="box" x="650" y="426" width="142" height="60"/>
+  <text class="h-txt" x="662" y="446">Exporters</text>
+  <text class="p-txt" x="662" y="463">node-exporter, Alloy,</text>
+  <text class="p-txt" x="662" y="478">cAdvisor, blackbox</text>
+
+  <!-- Native systemd services -->
+  <rect class="native" x="346" y="516" width="456" height="92"/>
+  <text class="zone-lbl-green" x="358" y="536">NATIVE SYSTEMD SERVICES (HOME SERVER)</text>
+  <rect class="box" x="358" y="548" width="214" height="48"/>
+  <text class="h-txt" x="370" y="568">Mission Control Dashboard</text>
+  <text class="mono-green" x="370" y="585">:8080 + local agent :4242</text>
+  <rect class="box" x="582" y="548" width="210" height="48"/>
+  <text class="h-txt" x="594" y="568">Cockpit &amp; SSH</text>
+  <text class="mono-green" x="594" y="585">127.0.0.1:9091 / :22</text>
+
+  <!-- Right Column: Peer Nodes -->
+  <rect class="zone" x="846" y="80" width="242" height="258"/>
+  <text class="zone-lbl" x="862" y="104">LAPTOP NODE (UBUNTU)</text>
+  <rect class="hostnet" x="862" y="120" width="210" height="94"/>
+  <text class="zone-lbl-amber" x="874" y="140">DOCKER HOST NETWORK</text>
+  <text class="p-txt" x="874" y="160">node-exporter (metrics)</text>
+  <text class="p-txt" x="874" y="178">cAdvisor (containers)</text>
+  <text class="p-txt" x="874" y="196">Grafana Alloy (logs)</text>
+  <rect class="native" x="862" y="228" width="210" height="94"/>
+  <text class="zone-lbl-green" x="874" y="248">NATIVE SYSTEMD</text>
+  <text class="p-txt" x="874" y="268">Mission Control agent :4242</text>
+  <text class="p-txt" x="874" y="286">Cockpit + SSH (tailnet)</text>
+  <text class="p-txt" x="874" y="304">Minecraft / Palworld (demand)</text>
+
+  <rect class="zone" x="846" y="366" width="242" height="258"/>
+  <text class="zone-lbl" x="862" y="390">MAIN DESKTOP (CACHYOS)</text>
+  <rect class="native" x="862" y="408" width="210" height="114"/>
+  <text class="zone-lbl-green" x="874" y="428">NATIVE SERVICES</text>
+  <text class="p-txt" x="874" y="448">Mission Control agent :4242</text>
+  <text class="p-txt" x="874" y="466">Cockpit + SSH (tailnet)</text>
+  <text class="p-txt" x="874" y="484">Minecraft / Palworld (demand)</text>
+  <text class="p-txt" x="874" y="502">Hermes + local AI (paused)</text>
+  <rect class="box" x="862" y="536" width="210" height="72"/>
+  <text class="h-txt" x="874" y="558">External Game Access</text>
+  <text class="p-txt" x="874" y="576">Playit tunnel forwards only the</text>
+  <text class="p-txt" x="874" y="592">active game port (no admin)</text>
+
+  <!-- Connecting lines between columns -->
+  <!-- Tailscale Serve -> Home Server loopback bridges -->
+  <line class="line-local" x1="284" y1="246" x2="342" y2="170" marker-end="url(#arr-g)"/>
+  <line class="line-local" x1="284" y1="376" x2="342" y2="572" marker-end="url(#arr-g)"/>
+  <!-- Direct tailscale0 -> monitoring_mon -->
+  <line class="line-ts" x1="284" y1="468" x2="342" y2="340" marker-end="url(#arr-b)"/>
+
+  <!-- Laptop exporters -> Home Server monitoring_mon -->
+  <path class="line-poll" d="M 862 168 L 832 168 L 832 332 L 806 332" marker-end="url(#arr-p)"/>
+  <!-- Mission Control polling -> Laptop & Desktop -->
+  <path class="line-poll" d="M 802 572 L 832 572 L 832 268 L 858 268" marker-end="url(#arr-p)"/>
+  <path class="line-poll" d="M 832 572 L 832 454 L 858 454" marker-end="url(#arr-p)"/>
+
+  <!-- Legend Footer -->
+  <line class="line-local" x1="36" y1="652" x2="72" y2="652"/>
+  <text class="edge-lbl" x="82" y="656">Tailscale Serve -> 127.0.0.1 loopback proxy</text>
+
+  <line class="line-ts" x1="360" y1="652" x2="396" y2="652"/>
+  <text class="edge-lbl" x="406" y="656">Direct tailscale0 interface bind</text>
+
+  <line class="line-poll" x1="628" y1="652" x2="664" y2="652"/>
+  <text class="edge-lbl" x="674" y="656">Monitoring scrape / log push &amp; Mission Control polling</text>
+</svg>

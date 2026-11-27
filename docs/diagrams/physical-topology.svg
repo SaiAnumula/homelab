@@ -1,0 +1,238 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 620" width="1120" height="620" role="img" aria-label="Homelab Physical Network Topology">
+  <defs>
+    <style>
+      .bg { fill: #0d1117; }
+      .zone { fill: #161b22; stroke: #30363d; stroke-width: 1.5; rx: 12; }
+      .zone-tailnet { fill: #101926; stroke: #1f6feb; stroke-width: 1.5; stroke-dasharray: 6 4; rx: 12; }
+      .card { fill: #1c2128; stroke: #3b434d; stroke-width: 1.4; rx: 10; }
+      .card-accent { fill: #1c2128; stroke: #388bfd; stroke-width: 1.6; rx: 10; }
+      .card-tunnel { fill: #1f1b14; stroke: #d29922; stroke-width: 1.5; rx: 10; }
+      .title { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #f0f6fc; }
+      .subtitle { font: 400 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #8b949e; }
+      .zone-lbl { font: 700 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #8b949e; letter-spacing: 0.08em; }
+      .zone-lbl-blue { font: 700 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #58a6ff; letter-spacing: 0.08em; }
+      .node-title { font: 700 13.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #f0f6fc; }
+      .node-sub { font: 400 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #8b949e; }
+      .node-hw { font: 400 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #adbac7; }
+      .badge-wired { fill: #132c1d; stroke: #2ea043; stroke-width: 1; rx: 4; }
+      .badge-wifi { fill: #261d0f; stroke: #d29922; stroke-width: 1; rx: 4; }
+      .badge-ts { fill: #12243d; stroke: #388bfd; stroke-width: 1; rx: 4; }
+      .badge-txt-green { font: 600 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #3fb950; }
+      .badge-txt-amber { font: 600 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #e3b341; }
+      .badge-txt-blue { font: 600 10px ui-monospace, SFMono-Regular, Menlo, monospace; fill: #58a6ff; }
+      .line-lan { stroke: #6e7681; stroke-width: 1.8; fill: none; }
+      .line-ts { stroke: #58a6ff; stroke-width: 1.8; stroke-dasharray: 6 4; fill: none; }
+      .line-tunnel { stroke: #d29922; stroke-width: 1.8; stroke-dasharray: 4 3; fill: none; }
+      .edge-lbl { font: 600 10.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #8b949e; }
+      .edge-lbl-blue { font: 600 10.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #58a6ff; }
+      .edge-lbl-amber { font: 600 10.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; fill: #e3b341; }
+      .icon { stroke: #58a6ff; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .icon-green { stroke: #3fb950; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .icon-amber { stroke: #e3b341; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .icon-muted { stroke: #adbac7; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+    <marker id="arrow-lan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#6e7681"/>
+    </marker>
+    <marker id="arrow-ts" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#58a6ff"/>
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#d29922"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas -->
+  <rect class="bg" width="1120" height="620" rx="14"/>
+
+  <!-- Header -->
+  <text class="title" x="32" y="40">Homelab Physical Topology</text>
+  <text class="subtitle" x="32" y="60">Home LAN hardware layout, uplink types, and external entry paths (no router port forwards)</text>
+
+  <!-- Top Row: Internet, Router, Tailscale Overlay, Playit Tunnel -->
+  <!-- Internet Node -->
+  <rect class="card" x="32" y="84" width="210" height="72"/>
+  <g transform="translate(48, 104)">
+    <!-- Globe icon -->
+    <circle class="icon-muted" cx="16" cy="16" r="13"/>
+    <ellipse class="icon-muted" cx="16" cy="16" rx="6" ry="13"/>
+    <line class="icon-muted" x1="3" y1="16" x2="29" y2="16"/>
+  </g>
+  <text class="node-title" x="92" y="114">Internet (ISP)</text>
+  <text class="node-sub" x="92" y="132">No inbound port</text>
+  <text class="node-sub" x="92" y="147">forwarding on router</text>
+
+  <!-- Home Router -->
+  <rect class="card" x="312" y="84" width="240" height="72"/>
+  <g transform="translate(328, 104)">
+    <!-- Router icon -->
+    <rect class="icon-green" x="2" y="14" width="28" height="12" rx="3"/>
+    <line class="icon-green" x1="9" y1="14" x2="9" y2="5"/>
+    <line class="icon-green" x1="23" y1="14" x2="23" y2="5"/>
+    <circle cx="8" cy="20" r="1.5" fill="#3fb950"/>
+    <circle cx="14" cy="20" r="1.5" fill="#3fb950"/>
+    <circle cx="24" cy="20" r="1.5" fill="#3fb950"/>
+  </g>
+  <text class="node-title" x="372" y="114">Home Router</text>
+  <text class="node-sub" x="372" y="132">NAT, DHCP, LAN gateway</text>
+  <text class="node-sub" x="372" y="147">Wired 1 GbE + Wi-Fi</text>
+
+  <!-- Tailscale Mesh Zone -->
+  <rect class="zone-tailnet" x="612" y="76" width="250" height="88"/>
+  <text class="zone-lbl-blue" x="628" y="96">TAILSCALE OVERLAY (WIREGUARD)</text>
+  <g transform="translate(628, 108)">
+    <!-- Shield icon -->
+    <path class="icon" d="M16 3 L28 8 V16 C28 23 22 28 16 30 C10 28 4 23 4 16 V8 Z"/>
+    <path class="icon" d="M11 16 L15 20 L22 12"/>
+  </g>
+  <text class="node-title" x="672" y="124">Admin Devices</text>
+  <text class="node-sub" x="672" y="141">Laptops, tablets, phones</text>
+  <text class="node-sub" x="672" y="155">Encrypted SSH &amp; HTTPS</text>
+
+  <!-- Playit Tunnel -->
+  <rect class="card-tunnel" x="886" y="84" width="202" height="72"/>
+  <g transform="translate(902, 104)">
+    <!-- Tunnel / game icon -->
+    <path class="icon-amber" d="M4 22 C4 12 10 6 16 6 C22 6 28 12 28 22"/>
+    <path class="icon-amber" d="M10 22 C10 15 13 12 16 12 C19 12 22 15 22 22"/>
+    <line class="icon-amber" x1="2" y1="22" x2="30" y2="22"/>
+  </g>
+  <text class="node-title" x="944" y="114">Playit Tunnel</text>
+  <text class="node-sub" x="944" y="132">Single game port only</text>
+  <text class="node-sub" x="944" y="147">External players</text>
+
+  <!-- Top Connections -->
+  <line class="line-lan" x1="242" y1="120" x2="306" y2="120" marker-end="url(#arrow-lan)"/>
+  <text class="edge-lbl" x="258" y="112">WAN</text>
+
+  <!-- LAN Zone -->
+  <rect class="zone" x="32" y="218" width="1056" height="332"/>
+  <text class="zone-lbl" x="50" y="242">HOME LAN (PRIVATE NETWORK)</text>
+
+  <!-- Router to LAN bus -->
+  <line class="line-lan" x1="432" y1="156" x2="432" y2="200"/>
+  <line class="line-lan" x1="176" y1="200" x2="960" y2="200"/>
+  <line class="line-lan" x1="176" y1="200" x2="176" y2="256" marker-end="url(#arrow-lan)"/>
+  <line class="line-lan" x1="444" y1="200" x2="444" y2="256" marker-end="url(#arrow-lan)"/>
+  <line class="line-lan" x1="712" y1="200" x2="712" y2="256" marker-end="url(#arrow-lan)"/>
+  <line class="line-lan" x1="960" y1="200" x2="960" y2="256" marker-end="url(#arrow-lan)"/>
+
+  <!-- Node 1: Ubuntu Home Server -->
+  <rect class="card-accent" x="52" y="262" width="248" height="264"/>
+  <g transform="translate(70, 280)">
+    <!-- Server rack icon -->
+    <rect class="icon" x="2" y="3" width="28" height="10" rx="2"/>
+    <rect class="icon" x="2" y="17" width="28" height="10" rx="2"/>
+    <circle cx="8" cy="8" r="1.4" fill="#58a6ff"/>
+    <circle cx="8" cy="22" r="1.4" fill="#58a6ff"/>
+    <line class="icon" x1="15" y1="8" x2="25" y2="8"/>
+    <line class="icon" x1="15" y1="22" x2="25" y2="22"/>
+  </g>
+  <text class="node-title" x="112" y="294">Ubuntu Home Server</text>
+  <text class="node-sub" x="112" y="311">Primary always-on host</text>
+  <rect class="badge-wired" x="70" y="324" width="84" height="20"/>
+  <text class="badge-txt-green" x="79" y="338">WIRED 1 GbE</text>
+  <rect class="badge-ts" x="162" y="324" width="76" height="20"/>
+  <text class="badge-txt-blue" x="171" y="338">TAILSCALE</text>
+  <text class="node-hw" x="70" y="366">OS:  Ubuntu Server 24.04</text>
+  <text class="node-hw" x="70" y="383">CPU: Intel Core i5-3570K</text>
+  <text class="node-hw" x="70" y="400">GPU: NVIDIA GTX 1050 Ti</text>
+  <text class="node-hw" x="70" y="417">Disk: SSD + 2 TB HDD</text>
+  <line x1="70" y1="432" x2="282" y2="432" stroke="#30363d" stroke-width="1"/>
+  <text class="node-sub" x="70" y="451">Plex, Jellyfin, Immich</text>
+  <text class="node-sub" x="70" y="468">Homepage, Wallos, Cockpit</text>
+  <text class="node-sub" x="70" y="485">Mission Control dashboard</text>
+  <text class="node-sub" x="70" y="502">Prometheus, Grafana, Loki, Alloy</text>
+
+  <!-- Node 2: Main Desktop -->
+  <rect class="card" x="320" y="262" width="248" height="264"/>
+  <g transform="translate(338, 280)">
+    <!-- Desktop workstation icon -->
+    <rect class="icon-muted" x="2" y="4" width="28" height="19" rx="2"/>
+    <line class="icon-muted" x1="11" y1="23" x2="11" y2="28"/>
+    <line class="icon-muted" x1="21" y1="23" x2="21" y2="28"/>
+    <line class="icon-muted" x1="7" y1="28" x2="25" y2="28"/>
+  </g>
+  <text class="node-title" x="380" y="294">Main Desktop</text>
+  <text class="node-sub" x="380" y="311">Workstation &amp; local AI</text>
+  <rect class="badge-wired" x="338" y="324" width="84" height="20"/>
+  <text class="badge-txt-green" x="347" y="338">WIRED LAN</text>
+  <rect class="badge-ts" x="430" y="324" width="76" height="20"/>
+  <text class="badge-txt-blue" x="439" y="338">TAILSCALE</text>
+  <text class="node-hw" x="338" y="366">OS:  CachyOS Linux</text>
+  <text class="node-hw" x="338" y="383">CPU: Intel i5-13600KF</text>
+  <text class="node-hw" x="338" y="400">GPU: RX 9070 (16 GB VRAM)</text>
+  <text class="node-hw" x="338" y="417">RAM: 24 GB DDR4</text>
+  <line x1="338" y1="432" x2="550" y2="432" stroke="#30363d" stroke-width="1"/>
+  <text class="node-sub" x="338" y="451">Daily workstation</text>
+  <text class="node-sub" x="338" y="468">Local AI (PolyStrata, paused)</text>
+  <text class="node-sub" x="338" y="485">Cockpit + telemetry agent</text>
+  <text class="node-sub" x="338" y="502">On-demand game servers</text>
+
+  <!-- Node 3: Laptop Node -->
+  <rect class="card" x="588" y="262" width="248" height="264"/>
+  <g transform="translate(606, 280)">
+    <!-- Laptop icon -->
+    <rect class="icon-muted" x="4" y="5" width="24" height="16" rx="2"/>
+    <path class="icon-muted" d="M1 24 H31 L29 21 H3 Z"/>
+  </g>
+  <text class="node-title" x="648" y="294">Laptop Node</text>
+  <text class="node-sub" x="648" y="311">Secondary Docker host</text>
+  <rect class="badge-wifi" x="606" y="324" width="60" height="20"/>
+  <text class="badge-txt-amber" x="619" y="338">WI-FI</text>
+  <rect class="badge-ts" x="674" y="324" width="76" height="20"/>
+  <text class="badge-txt-blue" x="683" y="338">TAILSCALE</text>
+  <text class="node-hw" x="606" y="366">OS:  Ubuntu 24.04 LTS</text>
+  <text class="node-hw" x="606" y="383">CPU: Intel Core i3-1215U</text>
+  <text class="node-hw" x="606" y="400">GPU: Intel Integrated</text>
+  <text class="node-hw" x="606" y="417">RAM: 16 GB</text>
+  <line x1="606" y1="432" x2="818" y2="432" stroke="#30363d" stroke-width="1"/>
+  <text class="node-sub" x="606" y="451">node-exporter, cAdvisor, Alloy</text>
+  <text class="node-sub" x="606" y="468">Cockpit + telemetry agent</text>
+  <text class="node-sub" x="606" y="485">On-demand game servers</text>
+  <text class="node-sub" x="606" y="502">(Minecraft / Palworld)</text>
+
+  <!-- Node 4: Raspberry Pi 5 -->
+  <rect class="card" x="856" y="262" width="210" height="264"/>
+  <g transform="translate(874, 280)">
+    <!-- SBC / Chip icon -->
+    <rect class="icon-muted" x="7" y="7" width="18" height="18" rx="2"/>
+    <line class="icon-muted" x1="12" y1="2" x2="12" y2="7"/>
+    <line class="icon-muted" x1="20" y1="2" x2="20" y2="7"/>
+    <line class="icon-muted" x1="12" y1="25" x2="12" y2="30"/>
+    <line class="icon-muted" x1="20" y1="25" x2="20" y2="30"/>
+    <line class="icon-muted" x1="2" y1="12" x2="7" y2="12"/>
+    <line class="icon-muted" x1="2" y1="20" x2="7" y2="20"/>
+    <line class="icon-muted" x1="25" y1="12" x2="30" y2="12"/>
+    <line class="icon-muted" x1="25" y1="20" x2="30" y2="20"/>
+  </g>
+  <text class="node-title" x="916" y="294">Raspberry Pi 5</text>
+  <text class="node-sub" x="916" y="311">NAS proof of concept</text>
+  <rect class="badge-ts" x="874" y="324" width="76" height="20"/>
+  <text class="badge-txt-blue" x="883" y="338">TAILSCALE</text>
+  <text class="node-hw" x="874" y="366">OS:  Linux (ARM64)</text>
+  <text class="node-hw" x="874" y="383">RAM: 4 GB</text>
+  <line x1="874" y1="432" x2="1048" y2="432" stroke="#30363d" stroke-width="1"/>
+  <text class="node-sub" x="874" y="451">Class project NAS PoC</text>
+  <text class="node-sub" x="874" y="468">Reachable over tailnet</text>
+
+  <!-- Tailscale overlay arrows down into LAN -->
+  <path class="line-ts" d="M 737 164 L 737 184 L 220 184 L 220 256" marker-end="url(#arrow-ts)"/>
+  <path class="line-ts" d="M 737 184 L 484 184 L 484 256" marker-end="url(#arrow-ts)"/>
+  <path class="line-ts" d="M 737 184 L 752 184 L 752 256" marker-end="url(#arrow-ts)"/>
+  <path class="line-ts" d="M 737 184 L 916 184 L 916 256" marker-end="url(#arrow-ts)"/>
+
+  <!-- Playit tunnel arrow to Laptop / Desktop game servers -->
+  <path class="line-tunnel" d="M 987 156 L 987 174 L 792 174 L 792 256" marker-end="url(#arrow-amber)"/>
+  <text class="edge-lbl-amber" x="876" y="169">Game port only</text>
+
+  <!-- Legend Footer -->
+  <line class="line-lan" x1="36" y1="584" x2="72" y2="584"/>
+  <text class="edge-lbl" x="82" y="588">Physical LAN (Router / Switch / Wi-Fi)</text>
+
+  <line class="line-ts" x1="330" y1="584" x2="366" y2="584"/>
+  <text class="edge-lbl-blue" x="376" y="588">Tailscale WireGuard Mesh (SSH, Cockpit, Tailscale Serve, Monitoring)</text>
+
+  <line class="line-tunnel" x1="792" y1="584" x2="828" y2="584"/>
+  <text class="edge-lbl-amber" x="838" y="588">Playit Tunnel (Game Port Only)</text>
+</svg>

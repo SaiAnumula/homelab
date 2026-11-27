@@ -2,7 +2,7 @@
 
 [![Validate Compose files](https://github.com/SaiAnumula/homelab/actions/workflows/validate.yml/badge.svg)](https://github.com/SaiAnumula/homelab/actions/workflows/validate.yml)
 
-This repository documents the machines and services I run at home and why they are set up the way they are. It contains sanitized Docker Compose files, a network diagram, and notes on hardware, storage, monitoring, and remote access.
+This repository documents the machines and services I run at home and why they are set up the way they are. It contains sanitized Docker Compose files, [physical and logical network topology diagrams](docs/network-topology.md), and notes on hardware, storage, monitoring, and remote access.
 
 It does not contain credentials, private IP addresses, media, personal data, or application databases.
 
@@ -95,7 +95,10 @@ homelab/
 │   └── validate.yml
 ├── docs/
 │   ├── backup-and-restore.md
-│   └── network-topology.md
+│   ├── network-topology.md
+│   └── diagrams/
+│       ├── logical-topology.svg
+│       └── physical-topology.svg
 ├── immich/
 │   ├── docker-compose.yml
 │   └── .env.example
